@@ -2,11 +2,19 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { createContext, useContext } from 'react';
 
 interface SortableItemProps {
   id: string;
   children: React.ReactNode;
 }
+
+interface DragHandleContextType {
+  attributes: any;
+  listeners: any;
+}
+
+const DragHandleContext = createContext<DragHandleContextType | null>(null);
 
 export function SortableItem({ id, children }: SortableItemProps) {
   const {
@@ -25,12 +33,30 @@ export function SortableItem({ id, children }: SortableItemProps) {
   };
 
   return (
+    <DragHandleContext.Provider value={{ attributes, listeners }}>
+      <div 
+        ref={setNodeRef} 
+        style={style}
+        className={isDragging ? 'z-50' : ''}
+      >
+        {children}
+      </div>
+    </DragHandleContext.Provider>
+  );
+}
+
+export function DragHandle({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const context = useContext(DragHandleContext);
+  
+  if (!context) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
     <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-      className={isDragging ? 'z-50' : ''}
+      {...context.attributes} 
+      {...context.listeners}
+      className={`cursor-grab active:cursor-grabbing ${className}`}
     >
       {children}
     </div>
