@@ -1,4 +1,4 @@
-import { serverDatabases as databases, DATABASE_ID, RESPONSES_COLLECTION_ID, ID, Permission, Role, Query } from './appwrite-server';
+import { serverDatabases as databases, DATABASE_ID, RESPONSES_COLLECTION_ID, FORMS_COLLECTION_ID, ID, Permission, Role, Query } from './appwrite-server';
 import { FormResponse } from '@/types/form';
 
 export class ResponsesService {
@@ -14,10 +14,8 @@ export class ResponsesService {
           responses: JSON.stringify(responses),
           submittedAt: new Date().toISOString(),
           ipAddress: ipAddress || null
-        },
-        [
-          Permission.read(Role.any()) // We'll filter by form owner later
-        ]
+        }
+        // No permissions - rely on collection-level permissions
       );
 
       return this.transformDocument(result);
@@ -30,6 +28,10 @@ export class ResponsesService {
   // Get responses for a form (only form owner can access)
   static async getFormResponses(formId: string) {
     try {
+      console.log('Querying responses for formId:', formId);
+      console.log('Using database:', DATABASE_ID);
+      console.log('Using collection:', RESPONSES_COLLECTION_ID);
+      
       const result = await databases.listDocuments(
         DATABASE_ID,
         RESPONSES_COLLECTION_ID,
@@ -39,9 +41,13 @@ export class ResponsesService {
         ]
       );
 
+      console.log('Raw result from Appwrite:', result);
+      console.log('Number of documents found:', result.documents.length);
+
       return result.documents.map(doc => this.transformDocument(doc));
     } catch (error) {
       console.error('Error getting form responses:', error);
+      console.error('Error details:', error);
       throw error;
     }
   }

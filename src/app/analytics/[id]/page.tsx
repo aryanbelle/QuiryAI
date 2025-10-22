@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -41,18 +41,37 @@ export default function AnalyticsPage() {
 
   const fetchData = async (formId: string) => {
     try {
+      console.log('Fetching analytics data for form:', formId);
+
       const [formResponse, responsesResponse] = await Promise.all([
         fetch(`/api/forms/${formId}`),
         fetch(`/api/responses?formId=${formId}`)
       ]);
 
+      console.log('Form response status:', formResponse.status);
+      console.log('Responses response status:', responsesResponse.status);
+
       if (formResponse.ok && responsesResponse.ok) {
         const formData = await formResponse.json();
         const responsesData = await responsesResponse.json();
-        
+
+        console.log('Form data:', formData);
+        console.log('Responses data:', responsesData);
+        console.log('Number of responses:', responsesData.length);
+
         setForm(formData);
         setResponses(responsesData);
       } else {
+        console.error('API responses not ok:', {
+          formStatus: formResponse.status,
+          responsesStatus: responsesResponse.status
+        });
+
+        if (!responsesResponse.ok) {
+          const errorData = await responsesResponse.json();
+          console.error('Responses API error:', errorData);
+        }
+
         toast.error('Failed to load analytics data');
       }
     } catch (error) {
@@ -181,7 +200,7 @@ export default function AnalyticsPage() {
             <h1 className="text-3xl font-bold text-foreground mb-2">Analytics</h1>
             <p className="text-muted-foreground">{form.title}</p>
           </div>
-          
+
           <Button onClick={exportData}>
             <Download className="w-4 h-4 mr-2" />
             Export Data
@@ -330,7 +349,7 @@ export default function AnalyticsPage() {
                           {form.fields.map((field) => {
                             const value = response.responses[field.id];
                             if (!value) return <div key={field.id}></div>;
-                            
+
                             return (
                               <div key={field.id} className="text-sm">
                                 <span className="font-medium text-foreground">{field.label}:</span>{' '}
