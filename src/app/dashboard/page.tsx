@@ -26,49 +26,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
-// Mock data for demo
-const mockForms: Form[] = [
-  {
-    $id: '1',
-    title: 'Customer Feedback Survey',
-    description: 'Collect valuable feedback from our customers about their experience',
-    fields: [
-      { id: '1', type: 'text', label: 'Name', required: true, placeholder: 'Your name' },
-      { id: '2', type: 'email', label: 'Email', required: true, placeholder: 'your@email.com' },
-      { id: '3', type: 'radio', label: 'Rating', required: true, options: ['Excellent', 'Good', 'Average', 'Poor'] },
-      { id: '4', type: 'textarea', label: 'Comments', required: false, placeholder: 'Additional comments' }
-    ],
-    isActive: true,
-    createdAt: '2024-01-15T10:30:00Z'
-  },
-  {
-    $id: '2',
-    title: 'Event Registration',
-    description: 'Register for our upcoming tech conference',
-    fields: [
-      { id: '1', type: 'text', label: 'Full Name', required: true, placeholder: 'Enter your full name' },
-      { id: '2', type: 'email', label: 'Email Address', required: true, placeholder: 'your@email.com' },
-      { id: '3', type: 'select', label: 'Session Track', required: true, options: ['Frontend', 'Backend', 'DevOps', 'AI/ML'] },
-      { id: '4', type: 'checkbox', label: 'Dietary Preferences', required: false, options: ['Vegetarian', 'Vegan', 'Gluten-free'] }
-    ],
-    isActive: true,
-    createdAt: '2024-01-10T14:20:00Z'
-  },
-  {
-    $id: '3',
-    title: 'Job Application Form',
-    description: 'Apply for open positions at our company',
-    fields: [
-      { id: '1', type: 'text', label: 'Full Name', required: true, placeholder: 'Your full name' },
-      { id: '2', type: 'email', label: 'Email', required: true, placeholder: 'your@email.com' },
-      { id: '3', type: 'select', label: 'Position', required: true, options: ['Frontend Developer', 'Backend Developer', 'Designer', 'Product Manager'] },
-      { id: '4', type: 'file', label: 'Resume', required: true },
-      { id: '5', type: 'textarea', label: 'Cover Letter', required: false, placeholder: 'Tell us about yourself' }
-    ],
-    isActive: false,
-    createdAt: '2024-01-05T09:15:00Z'
-  }
-];
+
 
 function DashboardContent() {
   const [forms, setForms] = useState<Form[]>([]);
@@ -76,25 +34,75 @@ function DashboardContent() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Load mock data for demo
-    setTimeout(() => {
-      setForms(mockForms);
-      setLoading(false);
-    }, 500);
+    fetchForms();
   }, []);
 
-  const handleToggleActive = (formId: string, isActive: boolean) => {
-    setForms(forms.map(form => 
-      form.$id === formId ? { ...form, isActive: !isActive } : form
-    ));
-    toast.success(`Form ${!isActive ? 'activated' : 'deactivated'}`);
+  const fetchForms = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const response = await fetch(`/api/forms?userId=${user.$id}`);
+      if (response.ok) {
+        const formsData = await response.json();
+        setForms(formsData);
+      } else {
+        toast.error('Failed to load forms');
+      }
+    } catch (error) {
+      console.error('Error fetching forms:', error);
+      toast.error('Failed to load forms');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteForm = (formId: string) => {
+  const handleToggleActive = async (formId: string, isActive: boolean) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isActive: !isActive,
+          userId: user.$id,
+        }),
+      });
+
+      if (response.ok) {
+        setForms(forms.map(form => 
+          form.$id === formId ? { ...form, isActive: !isActive } : form
+        ));
+        toast.success(`Form ${!isActive ? 'activated' : 'deactivated'}`);
+      } else {
+        toast.error('Failed to update form');
+      }
+    } catch (error) {
+      console.error('Error updating form:', error);
+      toast.error('Failed to update form');
+    }
+  };
+
+  const handleDeleteForm = async (formId: string) => {
     if (!confirm('Are you sure you want to delete this form?')) return;
     
-    setForms(forms.filter(form => form.$id !== formId));
-    toast.success('Form deleted successfully');
+    try {
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setForms(forms.filter(form => form.$id !== formId));
+        toast.success('Form deleted successfully');
+      } else {
+        toast.error('Failed to delete form');
+      }
+    } catch (error) {
+      console.error('Error deleting form:', error);
+      toast.error('Failed to delete form');
+    }
   };
 
   const handleCopyLink = (formId: string) => {

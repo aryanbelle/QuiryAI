@@ -18,6 +18,7 @@ function CreateFormContent() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Form>({
     title: 'Untitled Form',
     description: 'Form description',
@@ -64,7 +65,7 @@ function CreateFormContent() {
     setForm(updatedForm);
   };
 
-  const handleSaveForm = () => {
+  const handleSaveForm = async () => {
     if (!form.title.trim()) {
       toast.error('Please enter a form title');
       return;
@@ -75,11 +76,40 @@ function CreateFormContent() {
       return;
     }
 
-    // Mock save for demo
-    toast.success('Form saved successfully!');
-    setTimeout(() => {
-      window.location.href = '/dashboard';
-    }, 1000);
+    setSaving(true);
+    try {
+      // Get user from auth context
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const response = await fetch('/api/forms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...form,
+          userId: user.$id,
+        }),
+      });
+
+      if (response.ok) {
+        const savedForm = await response.json();
+        toast.success('Form saved successfully!');
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to save form');
+      }
+    } catch (error) {
+      console.error('Error saving form:', error);
+      toast.error('Failed to save form');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddField = (type: FormField['type']) => {
@@ -116,9 +146,18 @@ function CreateFormContent() {
           </div>
 
           {form.fields.length > 0 && (
-            <Button onClick={handleSaveForm}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Form
+            <Button onClick={handleSaveForm} disabled={saving}>
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Form
+                </>
+              )}
             </Button>
           )}
         </div>

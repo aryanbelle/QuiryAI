@@ -63,7 +63,8 @@ export default function PublicFormPage() {
         setSubmitted(true);
         toast.success('Response submitted successfully!');
       } else {
-        toast.error('Failed to submit response');
+        const error = await response.json();
+        toast.error(error.error || 'Failed to submit response');
       }
     } catch (error) {
       console.error('Error submitting response:', error);

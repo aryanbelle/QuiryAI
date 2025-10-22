@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases } from '@/lib/appwrite';
-import { Form } from '@/types/form';
+import { FormsService } from '@/lib/forms-service';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await databases.getDocument(
-      process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-      process.env.NEXT_PUBLIC_APPWRITE_FORMS_COLLECTION_ID!,
-      params.id
-    );
-
-    return NextResponse.json(response);
-  } catch (error) {
+    const form = await FormsService.getForm(params.id);
+    return NextResponse.json(form);
+  } catch (error: any) {
     console.error('Error fetching form:', error);
-    return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+    
+    if (error.code === 404) {
+      return NextResponse.json(
+        { error: 'Form not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to fetch form' },
+      { status: 500 }
+    );
   }
 }
 
@@ -25,22 +30,42 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const formData: Partial<Form> = await request.json();
+    const body = await request.json();
     
-    const response = await databases.updateDocument(
-      process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-      process.env.NEXT_PUBLIC_APPWRITE_FORMS_COLLECTION_ID!,
-      params.id,
-      {
-        ...formData,
-        updatedAt: new Date().toISOString(),
-      }
-    );
-
-    return NextResponse.json(response);
-  } catch (error) {
+    // For now, we'll use the userId from the request body
+    // In a real app, you'd get this from the authenticated session
+    const userId = body.userId;
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID required' },
+        { status: 400 }
+      );
+    }
+    
+    const updatedForm = await FormsService.updateForm(params.id, body, userId);
+    return NextResponse.json(updatedForm);
+  } catch (error: any) {
     console.error('Error updating form:', error);
-    return NextResponse.json({ error: 'Failed to update form' }, { status: 500 });
+    
+    if (error.code === 404) {
+      return NextResponse.json(
+        { error: 'Form not found' },
+        { status: 404 }
+      );
+    }
+    
+    if (error.code === 401) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to update form' },
+      { status: 500 }
+    );
   }
 }
 
@@ -49,15 +74,31 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await databases.deleteDocument(
-      process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-      process.env.NEXT_PUBLIC_APPWRITE_FORMS_COLLECTION_ID!,
-      params.id
-    );
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
+    await FormsService.deleteForm(params.id);
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Form deleted successfully' 
+    });
+  } catch (error: any) {
     console.error('Error deleting form:', error);
-    return NextResponse.json({ error: 'Failed to delete form' }, { status: 500 });
+    
+    if (error.code === 404) {
+      return NextResponse.json(
+        { error: 'Form not found' },
+        { status: 404 }
+      );
+    }
+    
+    if (error.code === 401) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to delete form' },
+      { status: 500 }
+    );
   }
 }

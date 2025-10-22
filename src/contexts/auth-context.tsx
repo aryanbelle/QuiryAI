@@ -23,10 +23,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      // First check localStorage for cached user
+      const cachedUser = localStorage.getItem('user');
+      if (cachedUser) {
+        setUser(JSON.parse(cachedUser));
+      }
+
+      // Then verify with Appwrite
       const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      if (currentUser) {
+        setUser(currentUser);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      } else {
+        setUser(null);
+        localStorage.removeItem('user');
+      }
     } catch (error) {
       setUser(null);
+      localStorage.removeItem('user');
     } finally {
       setLoading(false);
     }
@@ -36,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const user = await authService.signIn(email, password);
       setUser(user);
+      localStorage.setItem('user', JSON.stringify(user));
     } catch (error) {
       throw error;
     }
@@ -45,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const user = await authService.signUp(email, password, name);
       setUser(user);
+      localStorage.setItem('user', JSON.stringify(user));
     } catch (error) {
       throw error;
     }
@@ -54,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authService.signOut();
       setUser(null);
+      localStorage.removeItem('user');
     } catch (error) {
       throw error;
     }
