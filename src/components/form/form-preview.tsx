@@ -14,9 +14,10 @@ interface FormPreviewProps {
   form: Form;
   onSubmit?: (responses: Record<string, unknown>) => void;
   isSubmitting?: boolean;
+  readOnly?: boolean;
 }
 
-export function FormPreview({ form, onSubmit, isSubmitting = false }: FormPreviewProps) {
+export function FormPreview({ form, onSubmit, isSubmitting = false, readOnly = false }: FormPreviewProps) {
   const [responses, setResponses] = useState<Record<string, unknown>>({});
 
   const handleInputChange = (fieldId: string, value: unknown) => {
@@ -45,9 +46,10 @@ export function FormPreview({ form, onSubmit, isSubmitting = false }: FormPrevie
             type={field.type}
             placeholder={field.placeholder}
             value={value as string}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            onChange={readOnly ? undefined : (e) => handleInputChange(field.id, e.target.value)}
             className="ios-input"
             required={field.required}
+            disabled={readOnly}
           />
         );
 

@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import {
   Plus,
   FileText,
-  Eye,
+  BarChart3,
   Edit,
   Trash2,
   MoreVertical,
@@ -340,14 +340,14 @@ function DashboardContent() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center space-x-1">
-                            <Link href={`/form/${form.$id}`}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <Eye className="w-4 h-4" />
+                            <Link href={`/analytics/${form.$id}`}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View Analytics">
+                                <BarChart3 className="w-4 h-4" />
                               </Button>
                             </Link>
 
                             <Link href={`/edit/${form.$id}`}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit Form">
                                 <Edit className="w-4 h-4" />
                               </Button>
                             </Link>

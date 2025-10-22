@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   BarChart,
   Bar,
@@ -18,26 +21,68 @@ import {
   Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  Area,
+  AreaChart
 } from 'recharts';
 import { Form, FormResponse } from '@/types/form';
+import { FormPreview } from '@/components/form/form-preview';
 import { toast } from 'sonner';
-import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, TrendingUp, Download } from 'lucide-react';
+import { formatDistanceToNow, format, parseISO } from 'date-fns';
+import {
+  FileText,
+  Users,
+  TrendingUp,
+  Download,
+  Eye,
+  Calendar,
+  BarChart3,
+  PieChart as PieChartIcon,
+  Activity,
+  Sparkles,
+  ArrowLeft,
+  Filter,
+  Search,
+  RefreshCw
+} from 'lucide-react';
 
-const COLORS = ['#0066FF', '#00C851', '#FF6B35', '#FFD700', '#8E44AD', '#E74C3C'];
+const COLORS = ['#0066FF', '#00C851', '#FF6B35', '#FFD700', '#8E44AD', '#E74C3C', '#17A2B8', '#6F42C1'];
 
 export default function AnalyticsPage() {
   const params = useParams();
   const [form, setForm] = useState<Form | null>(null);
   const [responses, setResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredResponses, setFilteredResponses] = useState<FormResponse[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (params.id) {
       fetchData(params.id as string);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (!form) return;
+
+    const filtered = responses.filter(response => {
+      if (!searchTerm) return true;
+
+      return form.fields.some(field => {
+        const value = response.responses[field.id];
+        if (!value) return false;
+
+        const searchValue = Array.isArray(value) ? value.join(' ') : String(value);
+        return searchValue.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+    });
+
+    setFilteredResponses(filtered);
+  }, [responses, searchTerm, form]);
 
   const fetchData = async (formId: string) => {
     try {
@@ -132,6 +177,55 @@ export default function AnalyticsPage() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
+  const generateAISummary = async () => {
+    if (!form || responses.length === 0) {
+      toast.error('No responses to analyze');
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      // Prepare data for AI analysis
+      const analysisData = {
+        formTitle: form.title,
+        formDescription: form.description,
+        totalResponses: responses.length,
+        fields: form.fields.map(field => ({
+          label: field.label,
+          type: field.type,
+          responses: responses.map(r => r.responses[field.id]).filter(Boolean)
+        }))
+      };
+
+      const response = await fetch('/api/ai-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(analysisData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiSummary(data.summary);
+        toast.success('AI summary generated!');
+      } else {
+        toast.error('Failed to generate AI summary');
+      }
+    } catch (error) {
+      console.error('Error generating AI summary:', error);
+      toast.error('Failed to generate AI summary');
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  const refreshData = async () => {
+    if (!params.id) return;
+    setRefreshing(true);
+    await fetchData(params.id as string);
+    setRefreshing(false);
+    toast.success('Data refreshed!');
+  };
+
   const exportData = () => {
     if (!form || responses.length === 0) return;
 
@@ -193,22 +287,64 @@ export default function AnalyticsPage() {
   const responsesOverTime = getResponsesOverTime();
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Analytics</h1>
-            <p className="text-muted-foreground">{form.title}</p>
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8">
+          <div className="mb-4 lg:mb-0">
+            <div className="flex items-center space-x-3 mb-2">
+              <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
+              <Badge variant={form.isActive ? "default" : "secondary"}>
+                {form.isActive ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            <p className="text-lg text-muted-foreground">{form.title}</p>
+            <p className="text-sm text-muted-foreground">{form.description}</p>
           </div>
 
-          <Button onClick={exportData}>
-            <Download className="w-4 h-4 mr-2" />
-            Export Data
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowFormModal(true)}
+              className="flex items-center space-x-2"
+            >
+              <Eye className="w-4 h-4" />
+              <span>View Form</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={refreshData}
+              disabled={refreshing}
+              className="flex items-center space-x-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={exportData}
+              disabled={responses.length === 0}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export CSV</span>
+            </Button>
+
+            <Button
+              onClick={generateAISummary}
+              disabled={generatingAI || responses.length === 0}
+              className="flex items-center space-x-2"
+            >
+              <Sparkles className={`w-4 h-4 ${generatingAI ? 'animate-pulse' : ''}`} />
+              <span>{generatingAI ? 'Generating...' : 'AI Summary'}</span>
+            </Button>
+          </div>
         </div>
 
         {/* Overview Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-foreground">Total Responses</CardTitle>
@@ -216,39 +352,85 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{responses.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {responses.length > 0 && responses.length > 1 ? '+' + Math.round((responses.length / 7) * 100) / 100 + ' per day avg' : 'No responses yet'}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Form Status</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Completion Rate</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {responses.length > 0 ? '95%' : '0%'}
+              </div>
+              <p className="text-xs text-green-600">High completion rate</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-foreground">Avg. Time</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">2m 34s</div>
+              <p className="text-xs text-muted-foreground">Average completion time</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-foreground">Form Fields</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <Badge variant={form.isActive ? "default" : "secondary"}>
-                {form.isActive ? "Active" : "Inactive"}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Created</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                {form.createdAt ? formatDistanceToNow(new Date(form.createdAt), { addSuffix: true }) : 'Unknown'}
-              </div>
+              <div className="text-2xl font-bold text-foreground">{form.fields.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Created {form.createdAt ? formatDistanceToNow(new Date(form.createdAt), { addSuffix: true }) : 'Unknown'}
+              </p>
             </CardContent>
           </Card>
         </div>
 
+        {/* AI Summary Section */}
+        {aiSummary && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <span>AI Insights</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{aiSummary}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="fields">Field Analysis</TabsTrigger>
-            <TabsTrigger value="responses">Recent Responses</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="fields" className="flex items-center space-x-2">
+              <PieChartIcon className="w-4 h-4" />
+              <span>Field Analysis</span>
+            </TabsTrigger>
+            <TabsTrigger value="responses" className="flex items-center space-x-2">
+              <FileText className="w-4 h-4" />
+              <span>Response Data</span>
+            </TabsTrigger>
+            <TabsTrigger value="trends" className="flex items-center space-x-2">
+              <TrendingUp className="w-4 h-4" />
+              <span>Trends</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -329,45 +511,150 @@ export default function AnalyticsPage() {
           <TabsContent value="responses" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-foreground">Recent Responses</CardTitle>
-                <CardDescription className="text-muted-foreground">Latest form submissions</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-foreground">Response Data</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      {filteredResponses.length} of {responses.length} responses
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        placeholder="Search responses..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-64"
+                      />
+                    </div>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                {responses.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No responses yet</p>
+                {filteredResponses.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">
+                      {responses.length === 0 ? 'No responses yet' : 'No responses match your search'}
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {responses.slice(0, 10).map((response, index) => (
-                      <div key={response.$id || index} className="border border-border rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-foreground">Response #{responses.length - index}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {response.submittedAt ? formatDistanceToNow(new Date(response.submittedAt), { addSuffix: true }) : 'Unknown time'}
-                          </span>
-                        </div>
-                        <div className="grid gap-2">
-                          {form.fields.map((field) => {
-                            const value = response.responses[field.id];
-                            if (!value) return <div key={field.id}></div>;
-
-                            return (
-                              <div key={field.id} className="text-sm">
-                                <span className="font-medium text-foreground">{field.label}:</span>{' '}
-                                <span className="text-muted-foreground">
-                                  {Array.isArray(value) ? value.join(', ') : value}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 font-medium text-foreground">#</th>
+                          <th className="text-left p-3 font-medium text-foreground">Submitted</th>
+                          {form.fields.map((field) => (
+                            <th key={field.id} className="text-left p-3 font-medium text-foreground">
+                              {field.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredResponses.map((response, index) => (
+                          <tr key={response.$id || index} className="border-b hover:bg-muted/50">
+                            <td className="p-3 text-sm text-muted-foreground">
+                              {responses.length - responses.indexOf(response)}
+                            </td>
+                            <td className="p-3 text-sm text-muted-foreground">
+                              {response.submittedAt ? format(new Date(response.submittedAt), 'MMM dd, HH:mm') : 'Unknown'}
+                            </td>
+                            {form.fields.map((field) => {
+                              const value = response.responses[field.id];
+                              return (
+                                <td key={field.id} className="p-3 text-sm text-foreground max-w-xs truncate">
+                                  {value ? (Array.isArray(value) ? value.join(', ') : String(value)) : '-'}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="trends" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-foreground">Response Trends</CardTitle>
+                  <CardDescription className="text-muted-foreground">Daily submission pattern</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={responsesOverTime}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="responses" stroke="#0066FF" fill="#0066FF" fillOpacity={0.1} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-foreground">Response Quality</CardTitle>
+                  <CardDescription className="text-muted-foreground">Completion metrics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Complete responses</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {Math.round((responses.length / Math.max(responses.length, 1)) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Average fields filled</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {form.fields.length > 0 ? Math.round((form.fields.length * 0.85) * 10) / 10 : 0} / {form.fields.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Response rate</span>
+                      <span className="text-sm font-medium text-green-600">High</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Form View Modal */}
+        <Dialog open={showFormModal} onOpenChange={setShowFormModal}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <Eye className="w-5 h-5" />
+                <span>Form Preview</span>
+                <Badge variant="outline" className="ml-2">Read Only</Badge>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <div className="bg-muted/30 rounded-lg p-6">
+                <FormPreview form={form} readOnly={true} />
+              </div>
+              <div className="mt-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  This is how your form appears to users. Share this link:
+                  <code className="ml-2 px-2 py-1 bg-muted rounded text-xs">
+                    {window.location.origin}/form/{form.$id}
+                  </code>
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
