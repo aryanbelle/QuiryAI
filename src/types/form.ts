@@ -23,4 +23,7 @@ export interface FormResponse {
   formId: string;
   responses: Record<string, unknown>;
   submittedAt?: string;
+  ipAddress?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

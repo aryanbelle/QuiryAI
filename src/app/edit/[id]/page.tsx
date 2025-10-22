@@ -76,16 +76,22 @@ export default function EditFormPage() {
 
     setSaving(true);
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
       const response = await fetch(`/api/forms/${form.$id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          userId: user.$id,
+        }),
       });
 
       if (response.ok) {
         toast.success('Form updated successfully!');
       } else {
-        toast.error('Failed to update form');
+        const error = await response.json();
+        toast.error(error.error || 'Failed to update form');
       }
     } catch (error) {
       console.error('Error updating form:', error);
