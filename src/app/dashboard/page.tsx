@@ -5,13 +5,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { 
-  Plus, 
-  FileText, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  BarChart3,
+import {
+  Plus,
+  FileText,
+  Eye,
+  Edit,
+  Trash2,
   MoreVertical,
   Copy,
   Power,
@@ -31,6 +30,7 @@ import { formatDistanceToNow } from 'date-fns';
 function DashboardContent() {
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
+  const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
   const { user } = useAuth();
 
   useEffect(() => {
@@ -40,11 +40,14 @@ function DashboardContent() {
   const fetchForms = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
+
       const response = await fetch(`/api/forms?userId=${user.$id}`);
       if (response.ok) {
         const formsData = await response.json();
         setForms(formsData);
+        
+        // Fetch response counts for each form
+        await fetchResponseCounts(formsData);
       } else {
         toast.error('Failed to load forms');
       }
@@ -56,10 +59,38 @@ function DashboardContent() {
     }
   };
 
+  const fetchResponseCounts = async (formsData: Form[]) => {
+    try {
+      const counts: Record<string, number> = {};
+      
+      // Fetch response count for each form
+      await Promise.all(
+        formsData.map(async (form) => {
+          try {
+            const response = await fetch(`/api/responses/count?formId=${form.$id}`);
+            if (response.ok) {
+              const data = await response.json();
+              counts[form.$id!] = data.count;
+            } else {
+              counts[form.$id!] = 0;
+            }
+          } catch (error) {
+            console.error(`Error fetching count for form ${form.$id}:`, error);
+            counts[form.$id!] = 0;
+          }
+        })
+      );
+      
+      setResponseCounts(counts);
+    } catch (error) {
+      console.error('Error fetching response counts:', error);
+    }
+  };
+
   const handleToggleActive = async (formId: string, isActive: boolean) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
+
       const response = await fetch(`/api/forms/${formId}`, {
         method: 'PUT',
         headers: {
@@ -72,7 +103,7 @@ function DashboardContent() {
       });
 
       if (response.ok) {
-        setForms(forms.map(form => 
+        setForms(forms.map(form =>
           form.$id === formId ? { ...form, isActive: !isActive } : form
         ));
         toast.success(`Form ${!isActive ? 'activated' : 'deactivated'}`);
@@ -87,7 +118,7 @@ function DashboardContent() {
 
   const handleDeleteForm = async (formId: string) => {
     if (!confirm('Are you sure you want to delete this form?')) return;
-    
+
     try {
       const response = await fetch(`/api/forms/${formId}`, {
         method: 'DELETE',
@@ -111,14 +142,12 @@ function DashboardContent() {
     toast.success('Form link copied to clipboard');
   };
 
-  // Mock analytics data
+  // Get real form stats
   const getFormStats = (formId: string) => {
-    const stats = {
-      '1': { responses: 127, views: 340 },
-      '2': { responses: 89, views: 156 },
-      '3': { responses: 23, views: 67 }
+    return {
+      responses: responseCounts[formId] || 0,
+      views: 0 // Views tracking can be implemented later
     };
-    return stats[formId as keyof typeof stats] || { responses: 0, views: 0 };
   };
 
   if (loading) {
@@ -134,7 +163,7 @@ function DashboardContent() {
               </div>
               <div className="h-10 bg-muted rounded w-32"></div>
             </div>
-            
+
             {/* Stats skeleton */}
             <div className="grid md:grid-cols-3 gap-6">
               {[...Array(3)].map((_, i) => (
@@ -150,7 +179,7 @@ function DashboardContent() {
                 </Card>
               ))}
             </div>
-            
+
             {/* Table skeleton */}
             <Card>
               <div className="p-4 space-y-4">
@@ -185,7 +214,7 @@ function DashboardContent() {
             </h1>
             <p className="text-muted-foreground">Let&apos;s build something incredible today</p>
           </div>
-          
+
           <Link href="/create">
             <Button className="flex items-center space-x-2">
               <Plus className="w-4 h-4" />
@@ -212,7 +241,7 @@ function DashboardContent() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Total Responses</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {forms.reduce((acc, form) => acc + getFormStats(form.$id!).responses, 0)}
+                  {Object.values(responseCounts).reduce((acc, count) => acc + count, 0)}
                 </p>
                 <p className="text-xs text-green-600 mt-1">+12% growth</p>
               </div>
@@ -316,13 +345,13 @@ function DashboardContent() {
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </Link>
-                            
+
                             <Link href={`/edit/${form.$id}`}>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                 <Edit className="w-4 h-4" />
                               </Button>
                             </Link>
-                            
+
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -347,7 +376,7 @@ function DashboardContent() {
                                     </>
                                   )}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => handleDeleteForm(form.$id!)}
                                   className="text-destructive"
                                 >

@@ -50,6 +50,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const formId = searchParams.get('formId');
     
+    console.log('Fetching responses for formId:', formId);
+    
     if (!formId) {
       return NextResponse.json(
         { error: 'Form ID required' },
@@ -58,11 +60,13 @@ export async function GET(request: NextRequest) {
     }
     
     const responses = await ResponsesService.getFormResponses(formId);
+    console.log('Found responses:', responses.length);
+    
     return NextResponse.json(responses);
   } catch (error: any) {
     console.error('Error fetching responses:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch responses' },
+      { error: 'Failed to fetch responses', details: error.message },
       { status: 500 }
     );
   }
