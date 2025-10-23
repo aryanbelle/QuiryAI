@@ -9,7 +9,6 @@ import {
   Plus,
   FileText,
   BarChart3,
-  Edit,
   Trash2,
   MoreVertical,
   Copy,
@@ -343,12 +342,6 @@ function DashboardContent() {
                             <Link href={`/analytics/${form.$id}`}>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View Analytics">
                                 <BarChart3 className="w-4 h-4" />
-                              </Button>
-                            </Link>
-
-                            <Link href={`/edit/${form.$id}`}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit Form">
-                                <Edit className="w-4 h-4" />
                               </Button>
                             </Link>
 

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   BarChart,
   Bar,
@@ -43,7 +44,8 @@ import {
   ArrowLeft,
   Filter,
   Search,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 
 const COLORS = ['#0066FF', '#00C851', '#FF6B35', '#FFD700', '#8E44AD', '#E74C3C', '#17A2B8', '#6F42C1'];
@@ -59,6 +61,8 @@ export default function AnalyticsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredResponses, setFilteredResponses] = useState<FormResponse[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState('');
 
   useEffect(() => {
     if (params.id) {
@@ -133,17 +137,28 @@ export default function AnalyticsPage() {
 
     const fieldResponses = responses
       .map(r => r.responses[fieldId])
-      .filter(Boolean) as string[];
+      .filter(Boolean);
 
+    // Handle file fields
+    if (field.type === 'file') {
+      const fileCount = fieldResponses.filter(response => 
+        typeof response === 'object' && response !== null && (response as any).fileName
+      ).length;
+      return [{ name: 'Files Uploaded', value: fileCount }];
+    }
+
+    // Handle select and radio fields
     if (['select', 'radio'].includes(field.type)) {
       const counts = fieldResponses.reduce((acc: Record<string, number>, value) => {
-        acc[value] = (acc[value] || 0) + 1;
+        const stringValue = String(value);
+        acc[stringValue] = (acc[stringValue] || 0) + 1;
         return acc;
       }, {});
 
       return Object.entries(counts).map(([name, value]) => ({ name, value }));
     }
 
+    // Handle checkbox fields
     if (field.type === 'checkbox') {
       const allOptions: string[] = [];
       fieldResponses.forEach(response => {
@@ -177,7 +192,7 @@ export default function AnalyticsPage() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
-  const generateAISummary = async () => {
+  const generateAISummary = async (customQuestion?: string) => {
     if (!form || responses.length === 0) {
       toast.error('No responses to analyze');
       return;
@@ -185,19 +200,36 @@ export default function AnalyticsPage() {
 
     setGeneratingAI(true);
     try {
-      // Prepare data for AI analysis
+      // Prepare actual response data for analysis
+      const responseData = responses.map(response => {
+        const formattedResponse: Record<string, any> = {};
+        form.fields.forEach(field => {
+          const value = response.responses[field.id];
+          if (value !== undefined && value !== null && value !== '') {
+            // Handle different field types
+            if (field.type === 'file' && typeof value === 'object') {
+              formattedResponse[field.label] = (value as any).fileName || 'File uploaded';
+            } else if (Array.isArray(value)) {
+              formattedResponse[field.label] = value.join(', ');
+            } else {
+              formattedResponse[field.label] = String(value);
+            }
+          }
+        });
+        return {
+          ...formattedResponse,
+          submittedAt: response.submittedAt
+        };
+      });
+
       const analysisData = {
         formTitle: form.title,
-        formDescription: form.description,
         totalResponses: responses.length,
-        fields: form.fields.map(field => ({
-          label: field.label,
-          type: field.type,
-          responses: responses.map(r => r.responses[field.id]).filter(Boolean)
-        }))
+        responseData: responseData,
+        customQuestion: customQuestion || null
       };
 
-      const response = await fetch('/api/ai-summary', {
+      const response = await fetch('/api/ai-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(analysisData),
@@ -205,14 +237,14 @@ export default function AnalyticsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setAiSummary(data.summary);
-        toast.success('AI summary generated!');
+        setAiSummary(data.analysis);
+        toast.success(customQuestion ? 'AI analysis complete!' : 'Response analysis generated!');
       } else {
-        toast.error('Failed to generate AI summary');
+        toast.error('Failed to generate analysis');
       }
     } catch (error) {
-      console.error('Error generating AI summary:', error);
-      toast.error('Failed to generate AI summary');
+      console.error('Error generating AI analysis:', error);
+      toast.error('Failed to generate analysis');
     } finally {
       setGeneratingAI(false);
     }
@@ -234,9 +266,17 @@ export default function AnalyticsPage() {
       response.submittedAt || '',
       ...form.fields.map(field => {
         const value = response.responses[field.id];
+        
+        // Handle file fields
+        if (field.type === 'file' && typeof value === 'object' && value !== null) {
+          return (value as any).fileName || 'File uploaded';
+        }
+        
+        // Handle array values (checkboxes)
         if (Array.isArray(value)) {
           return value.join(', ');
         }
+        
         return value || '';
       })
     ]);
@@ -332,14 +372,26 @@ export default function AnalyticsPage() {
               <span>Export CSV</span>
             </Button>
 
-            <Button
-              onClick={generateAISummary}
-              disabled={generatingAI || responses.length === 0}
-              className="flex items-center space-x-2"
-            >
-              <Sparkles className={`w-4 h-4 ${generatingAI ? 'animate-pulse' : ''}`} />
-              <span>{generatingAI ? 'Generating...' : 'AI Summary'}</span>
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => generateAISummary()}
+                disabled={generatingAI || responses.length === 0}
+                className="flex items-center space-x-2"
+              >
+                <Sparkles className={`w-4 h-4 ${generatingAI ? 'animate-pulse' : ''}`} />
+                <span>{generatingAI ? 'Analyzing...' : 'AI Analysis'}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setShowAIChat(true)}
+                disabled={responses.length === 0}
+                className="flex items-center space-x-2"
+              >
+                <Activity className="w-4 h-4" />
+                <span>Ask AI</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -396,13 +448,23 @@ export default function AnalyticsPage() {
           </Card>
         </div>
 
-        {/* AI Summary Section */}
+        {/* AI Analysis Section */}
         {aiSummary && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <span>AI Insights</span>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <span>AI Response Analysis</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAiSummary('')}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -566,7 +628,19 @@ export default function AnalyticsPage() {
                               const value = response.responses[field.id];
                               return (
                                 <td key={field.id} className="p-3 text-sm text-foreground max-w-xs truncate">
-                                  {value ? (Array.isArray(value) ? value.join(', ') : String(value)) : '-'}
+                                  {value ? (
+                                    field.type === 'file' && typeof value === 'object' && value !== null ? (
+                                      <a
+                                        href={(value as any).fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline flex items-center space-x-1"
+                                      >
+                                        <FileText className="w-3 h-3" />
+                                        <span>{(value as any).fileName || 'File'}</span>
+                                      </a>
+                                    ) : Array.isArray(value) ? value.join(', ') : String(value)
+                                  ) : '-'}
                                 </td>
                               );
                             })}
@@ -651,6 +725,96 @@ export default function AnalyticsPage() {
                     {window.location.origin}/form/{form.$id}
                   </code>
                 </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {/* AI Chat Modal */}
+        <Dialog open={showAIChat} onOpenChange={setShowAIChat}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-primary" />
+                <span>Ask AI About Your Responses</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="ai-question" className="text-sm font-medium mb-2 block">
+                  What would you like to know about your responses?
+                </Label>
+                <Textarea
+                  id="ai-question"
+                  placeholder="e.g., What are the most common themes in the feedback? Which age group responds most? What patterns do you see in the ratings?"
+                  value={aiQuestion}
+                  onChange={(e) => setAiQuestion(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAiQuestion("What are the most common themes or patterns in the responses?")}
+                >
+                  Common Themes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAiQuestion("What insights can you provide about user satisfaction based on the responses?")}
+                >
+                  User Satisfaction
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAiQuestion("Are there any concerning trends or issues I should address?")}
+                >
+                  Issues & Trends
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAiQuestion("What recommendations do you have based on this response data?")}
+                >
+                  Recommendations
+                </Button>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button
+                  onClick={() => {
+                    if (aiQuestion.trim()) {
+                      generateAISummary(aiQuestion);
+                      setShowAIChat(false);
+                      setAiQuestion('');
+                    }
+                  }}
+                  disabled={generatingAI || !aiQuestion.trim()}
+                  className="flex-1"
+                >
+                  {generatingAI ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    'Analyze Responses'
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowAIChat(false);
+                    setAiQuestion('');
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           </DialogContent>

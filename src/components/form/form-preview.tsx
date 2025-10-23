@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormField } from '@/types/form';
+import { toast } from 'sonner';
+import { Upload, File, X } from 'lucide-react';
 
 interface FormPreviewProps {
   form: Form;
@@ -19,12 +21,53 @@ interface FormPreviewProps {
 
 export function FormPreview({ form, onSubmit, isSubmitting = false, readOnly = false }: FormPreviewProps) {
   const [responses, setResponses] = useState<Record<string, unknown>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
 
   const handleInputChange = (fieldId: string, value: unknown) => {
     setResponses(prev => ({
       ...prev,
       [fieldId]: value,
     }));
+  };
+
+  const handleFileUpload = async (fieldId: string, file: File) => {
+    if (!file) return;
+
+    setUploadingFiles(prev => ({ ...prev, [fieldId]: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const result = await response.json();
+      
+      // Store file info instead of File object
+      handleInputChange(fieldId, {
+        fileId: result.file.fileId,
+        fileName: result.file.fileName,
+        fileUrl: result.file.fileUrl,
+        originalName: file.name,
+        size: file.size,
+        type: file.type
+      });
+
+      toast.success('File uploaded successfully!');
+    } catch (error: any) {
+      console.error('Error uploading file:', error);
+      toast.error(error.message || 'Failed to upload file');
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [fieldId]: false }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -139,13 +182,71 @@ export function FormPreview({ form, onSubmit, isSubmitting = false, readOnly = f
         );
 
       case 'file':
+        const fileValue = value as any;
+        const isUploading = uploadingFiles[field.id];
+        
         return (
-          <Input
-            type="file"
-            onChange={(e) => handleInputChange(field.id, e.target.files?.[0])}
-            className="ios-input"
-            required={field.required}
-          />
+          <div className="space-y-3">
+            {!fileValue && !readOnly && (
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
+                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  {field.placeholder || 'Click to upload a file or drag and drop'}
+                </p>
+                <Input
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleFileUpload(field.id, file);
+                    }
+                  }}
+                  className="hidden"
+                  id={`file-${field.id}`}
+                  required={field.required}
+                  disabled={isUploading}
+                />
+                <Label 
+                  htmlFor={`file-${field.id}`} 
+                  className="cursor-pointer inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  {isUploading ? 'Uploading...' : 'Choose File'}
+                </Label>
+              </div>
+            )}
+            
+            {fileValue && (
+              <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
+                <File className="w-5 h-5 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {fileValue.fileName || fileValue.originalName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {fileValue.size ? `${Math.round(fileValue.size / 1024)} KB` : 'File uploaded'}
+                  </p>
+                </div>
+                {!readOnly && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleInputChange(field.id, null)}
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {isUploading && (
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span>Uploading file...</span>
+              </div>
+            )}
+          </div>
         );
 
       default:
