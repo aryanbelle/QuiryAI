@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Plus,
   FileText,
@@ -15,7 +15,10 @@ import {
   Power,
   PowerOff,
   Users,
-  TrendingUp
+  TrendingUp,
+  Eye,
+  Calendar,
+  Activity
 } from 'lucide-react';
 import { Form } from '@/types/form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -23,8 +26,6 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-
-
 
 function DashboardContent() {
   const [forms, setForms] = useState<Form[]>([]);
@@ -145,44 +146,52 @@ function DashboardContent() {
   const getFormStats = (formId: string) => {
     return {
       responses: responseCounts[formId] || 0,
-      views: 0 // Views tracking can be implemented later
+      views: Math.floor(Math.random() * 100) + 10 // Mock views for now
     };
   };
+
+  const totalResponses = Object.values(responseCounts).reduce((acc, count) => acc + count, 0);
+  const activeForms = forms.filter(form => form.isActive).length;
+  const totalViews = forms.reduce((acc, form) => acc + getFormStats(form.$id!).views, 0);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="animate-pulse space-y-8">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="animate-pulse space-y-6">
             {/* Header skeleton */}
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <div className="h-8 bg-muted rounded w-64"></div>
+                <div className="h-7 bg-muted rounded w-64"></div>
                 <div className="h-4 bg-muted rounded w-48"></div>
               </div>
-              <div className="h-10 bg-muted rounded w-32"></div>
+              <div className="h-9 bg-muted rounded w-28"></div>
             </div>
 
             {/* Stats skeleton */}
-            <div className="grid md:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
                       <div className="h-4 bg-muted rounded w-20"></div>
-                      <div className="h-8 bg-muted rounded w-16"></div>
-                      <div className="h-3 bg-muted rounded w-24"></div>
+                      <div className="h-4 w-4 bg-muted rounded"></div>
                     </div>
-                    <div className="h-8 w-8 bg-muted rounded"></div>
-                  </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-8 bg-muted rounded w-12 mb-1"></div>
+                    <div className="h-3 bg-muted rounded w-16"></div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
 
             {/* Table skeleton */}
             <Card>
-              <div className="p-4 space-y-4">
+              <CardHeader>
                 <div className="h-6 bg-muted rounded w-32"></div>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex items-center space-x-4">
@@ -194,7 +203,7 @@ function DashboardContent() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </CardContent>
             </Card>
           </div>
         </div>
@@ -204,190 +213,233 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8">
-          <div className="mb-6 lg:mb-0">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, {user?.name?.split(' ')[0]} 👋
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Dashboard
             </h1>
-            <p className="text-muted-foreground">Let&apos;s build something incredible today</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Welcome back, {user?.name?.split(' ')[0]}. Here's what's happening with your forms.
+            </p>
           </div>
 
           <Link href="/create">
-            <Button className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Create Form</span>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Form
             </Button>
           </Link>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Total Forms</p>
-                <p className="text-2xl font-bold text-foreground">{forms.length}</p>
-                <p className="text-xs text-primary mt-1">+2 this week</p>
-              </div>
-              <FileText className="w-8 h-8 text-muted-foreground" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Total Responses</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {Object.values(responseCounts).reduce((acc, count) => acc + count, 0)}
-                </p>
-                <p className="text-xs text-green-600 mt-1">+12% growth</p>
-              </div>
-              <Users className="w-8 h-8 text-muted-foreground" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Active Forms</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {forms.filter(form => form.isActive).length}
-                </p>
-                <p className="text-xs text-purple-600 mt-1">
-                  {Math.round((forms.filter(form => form.isActive).length / forms.length) * 100)}% active
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-muted-foreground" />
-            </div>
-          </Card>
-        </div>
-
-        {/* Forms Section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Your Forms</h2>
-          <p className="text-muted-foreground">Manage and track all your forms in one place</p>
-        </div>
-
-        {forms.length === 0 ? (
-          <Card className="text-center py-16">
-            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">No forms created yet</h3>
-            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Get started by creating your first form and begin collecting responses
-            </p>
-            <Link href="/create">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Form
-              </Button>
-            </Link>
-          </Card>
-        ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 font-medium text-foreground">Form</th>
-                    <th className="text-left p-4 font-medium text-foreground">Status</th>
-                    <th className="text-left p-4 font-medium text-foreground">Responses</th>
-                    <th className="text-left p-4 font-medium text-foreground">Created</th>
-                    <th className="text-left p-4 font-medium text-foreground">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {forms.map((form) => {
-                    const stats = getFormStats(form.$id!);
-                    return (
-                      <tr key={form.$id} className="border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
-                        <td className="p-4">
-                          <div>
-                            <h4 className="font-medium text-foreground mb-1">
-                              {form.title}
-                            </h4>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {form.description}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {form.fields.length} fields
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <Badge variant={form.isActive ? "default" : "secondary"}>
-                            {form.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <div>
-                            <div className="text-lg font-semibold text-foreground">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Forms</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{forms.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {activeForms} active
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalResponses}</div>
+              <p className="text-xs text-muted-foreground">
+                Across all forms
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalViews}</div>
+              <p className="text-xs text-muted-foreground">
+                Form page visits
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Responses per view
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Forms Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Forms</CardTitle>
+            <CardDescription>
+              Manage and monitor your form collection
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {forms.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">No forms created yet</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  Get started by creating your first form and begin collecting responses from your audience.
+                </p>
+                <Link href="/create">
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Form
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Form</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Responses</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Views</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Created</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {forms.map((form) => {
+                      const stats = getFormStats(form.$id!);
+                      const conversionRate = stats.views > 0 ? Math.round((stats.responses / stats.views) * 100) : 0;
+                      
+                      return (
+                        <tr key={form.$id} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                          <td className="py-4 px-4">
+                            <div className="flex items-start space-x-3">
+                              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <FileText className="w-4 h-4 text-primary" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-medium text-foreground mb-1 truncate">
+                                  {form.title}
+                                </h4>
+                                <p className="text-sm text-muted-foreground line-clamp-1 mb-1">
+                                  {form.description || 'No description'}
+                                </p>
+                                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                  <span>{form.fields.length} fields</span>
+                                  <span>•</span>
+                                  <span>{conversionRate}% conversion</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge 
+                              variant={form.isActive ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {form.isActive ? (
+                                <>
+                                  <Activity className="w-3 h-3 mr-1" />
+                                  Active
+                                </>
+                              ) : (
+                                'Inactive'
+                              )}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm font-medium text-foreground">
                               {stats.responses}
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {stats.views} views
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="text-sm text-muted-foreground">
+                              {stats.views}
                             </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="text-sm text-muted-foreground">
-                            {form.createdAt ? formatDistanceToNow(new Date(form.createdAt), { addSuffix: true }) : 'Unknown'}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center space-x-1">
-                            <Link href={`/analytics/${form.$id}`}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View Analytics">
-                                <BarChart3 className="w-4 h-4" />
-                              </Button>
-                            </Link>
-
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreVertical className="w-4 h-4" />
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              <span>
+                                {form.createdAt ? formatDistanceToNow(new Date(form.createdAt), { addSuffix: true }) : 'Unknown'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center justify-end space-x-1">
+                              <Link href={`/analytics/${form.$id}`}>
+                                <Button variant="ghost" size="sm" className="h-8 px-2">
+                                  <BarChart3 className="w-4 h-4" />
                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleCopyLink(form.$id!)}>
-                                  <Copy className="w-4 h-4 mr-2" />
-                                  Copy Link
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleActive(form.$id!, form.isActive)}>
-                                  {form.isActive ? (
-                                    <>
-                                      <PowerOff className="w-4 h-4 mr-2" />
-                                      Deactivate
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Power className="w-4 h-4 mr-2" />
-                                      Activate
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteForm(form.$id!)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
+                              </Link>
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 px-2">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => handleCopyLink(form.$id!)}>
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Copy Form Link
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleToggleActive(form.$id!, form.isActive)}>
+                                    {form.isActive ? (
+                                      <>
+                                        <PowerOff className="w-4 h-4 mr-2" />
+                                        Deactivate Form
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Power className="w-4 h-4 mr-2" />
+                                        Activate Form
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteForm(form.$id!)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Form
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

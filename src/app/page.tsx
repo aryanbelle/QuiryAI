@@ -3,12 +3,11 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Zap, BarChart3, Share2, Shield, Palette } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Sparkles, Zap, BarChart3, Shield } from 'lucide-react';
 
 export default function HomePage() {
   useEffect(() => {
-    // Check if user is already signed in
     const user = localStorage.getItem('user');
     if (user) {
       window.location.href = '/dashboard';
@@ -17,121 +16,98 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <nav className="border-b border-border">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="font-semibold text-lg">FormBuilder</div>
+          <div className="flex items-center space-x-3">
+            <Link href="/auth/signin">
+              <Button variant="ghost" size="sm">Sign in</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm">Get started</Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-8">
-            <Sparkles className="w-4 h-4" />
-            <span>AI-Powered Form Builder</span>
+          <div className="inline-flex items-center space-x-2 bg-muted px-3 py-1 rounded-full text-sm mb-6">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground">AI-powered form generation</span>
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Create Beautiful Forms
-            <span className="text-primary block">in Seconds</span>
+          <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">
+            The Foundation for your Design System
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-            Build dynamic forms with AI assistance, collect responses in real-time, 
-            and analyze data with beautiful visualizations. No coding required.
+          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
+            A set of beautifully designed components that you can customize, extend, 
+            and build on. Start here then make it your own. Open Source. Open Code.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/auth/signup">
-              <Button size="lg" className="text-lg px-8 py-4">
-                Get Started Free
+              <Button size="default" className="min-w-[120px]">
+                Get Started
               </Button>
             </Link>
-            
             <Link href="/auth/signin">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-                Sign In
+              <Button variant="outline" size="default" className="min-w-[120px]">
+                View Components
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Everything you need to build forms
+      {/* Features */}
+      <section className="py-12 bg-muted/20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-foreground mb-3">
+              Everything you need
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From AI-generated forms to advanced analytics, we&apos;ve got you covered.
+            <p className="text-muted-foreground">
+              Powerful features to create, manage, and analyze your forms
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="p-6 hover:shadow-lg transition-shadow">
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="border-0 shadow-none bg-card/50">
               <CardHeader className="pb-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-primary" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
+                  <Zap className="w-4 h-4 text-primary" />
                 </div>
-                <CardTitle className="text-xl text-foreground">AI Form Generation</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Describe your form in plain English and let AI create it instantly
+                <CardTitle className="text-lg">AI Generation</CardTitle>
+                <CardDescription className="text-sm">
+                  Describe your form and let AI build it instantly with smart field suggestions.
                 </CardDescription>
               </CardHeader>
             </Card>
             
-            <Card className="p-6 hover:shadow-lg transition-shadow">
+            <Card className="border-0 shadow-none bg-card/50">
               <CardHeader className="pb-4">
-                <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-4">
-                  <Zap className="w-6 h-6 text-green-500" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
+                  <BarChart3 className="w-4 h-4 text-primary" />
                 </div>
-                <CardTitle className="text-xl text-foreground">Drag & Drop Builder</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Easily customize forms with our intuitive drag-and-drop interface
+                <CardTitle className="text-lg">Real-time Analytics</CardTitle>
+                <CardDescription className="text-sm">
+                  Track responses, analyze trends, and get insights with beautiful dashboards.
                 </CardDescription>
               </CardHeader>
             </Card>
             
-            <Card className="p-6 hover:shadow-lg transition-shadow">
+            <Card className="border-0 shadow-none bg-card/50">
               <CardHeader className="pb-4">
-                <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4">
-                  <BarChart3 className="w-6 h-6 text-purple-500" />
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
+                  <Shield className="w-4 h-4 text-primary" />
                 </div>
-                <CardTitle className="text-xl text-foreground">Advanced Analytics</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Visualize responses with charts and get AI-powered insights
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-4">
-                  <Share2 className="w-6 h-6 text-orange-500" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Real-time Sharing</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Share forms instantly and collect responses in real-time
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-4">
-                  <Shield className="w-6 h-6 text-red-500" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Secure & Reliable</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Your data is protected with enterprise-grade security
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4">
-                  <Palette className="w-6 h-6 text-indigo-500" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Beautiful Design</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Clean, modern interface inspired by Apple&apos;s design system
+                <CardTitle className="text-lg">Secure & Reliable</CardTitle>
+                <CardDescription className="text-sm">
+                  Enterprise-grade security with 99.9% uptime and data encryption.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -139,24 +115,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-primary">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-6">
-            Ready to build your first form?
+      {/* CTA */}
+      <section className="py-12">
+        <div className="max-w-4xl mx-auto text-center px-6">
+          <h2 className="text-2xl font-bold text-foreground mb-3">
+            Ready to get started?
           </h2>
-          <p className="text-lg text-primary-foreground/80 mb-8">
-            Join thousands of users who trust FormBuilder for their form needs.
+          <p className="text-muted-foreground mb-6">
+            Join thousands of teams already using FormBuilder
           </p>
-          
           <Link href="/auth/signup">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-4 font-medium">
-              <Sparkles className="w-5 h-5 mr-2" />
-              Get Started for Free
+            <Button size="default">
+              Start building for free
             </Button>
           </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <p className="text-muted-foreground text-sm">
+            © 2024 FormBuilder. Built for developers.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
