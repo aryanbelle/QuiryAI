@@ -1,142 +1,249 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Sparkles, Zap, BarChart3, Shield } from 'lucide-react';
+import { ArrowRight, Sparkles, Zap, BarChart3, Shield, Star, Users, Rocket } from 'lucide-react';
 
 export default function HomePage() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
       window.location.href = '/dashboard';
     }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
+      <div 
+        className="absolute inset-0 opacity-30"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 255, 255, 0.06), transparent 40%)`
+        }}
+      ></div>
+
       {/* Navigation */}
-      <nav className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="font-semibold text-lg">FormBuilder</div>
-          <div className="flex items-center space-x-3">
+      <nav className="relative z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              FormBuilder
+            </span>
+          </div>
+          <div className="flex items-center space-x-4">
             <Link href="/auth/signin">
-              <Button variant="ghost" size="sm">Sign in</Button>
+              <Button variant="ghost" size="sm" className="hover:bg-primary/10 transition-all duration-300">
+                Sign in
+              </Button>
             </Link>
             <Link href="/auth/signup">
-              <Button size="sm">Get started</Button>
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300"
+              >
+                Get started
+              </Button>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center space-x-2 bg-muted px-3 py-1 rounded-full text-sm mb-6">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-muted-foreground">AI-powered form generation</span>
+      <section className="relative z-10 py-24 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          {/* Announcement Badge */}
+          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-2 rounded-full text-sm mb-8 backdrop-blur-sm hover:from-primary/15 hover:to-primary/10 transition-all duration-300 cursor-pointer group">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <Sparkles className="w-4 h-4 text-primary group-hover:rotate-12 transition-transform duration-300" />
+            <span className="text-foreground font-medium">AI-powered form generation</span>
+            <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform duration-300" />
           </div>
           
-          <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">
-            The Foundation for your Design System
+          {/* Main Headline */}
+          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+            <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+              Build forms like a team of
+            </span>
+            <br />
+            <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent relative">
+              hundreds today
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-transparent blur-xl opacity-70 animate-pulse"></div>
+            </span>
           </h1>
           
-          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-            A set of beautifully designed components that you can customize, extend, 
-            and build on. Start here then make it your own. Open Source. Open Code.
+          {/* Subtitle */}
+          <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
+            Create beautiful, intelligent forms with AI assistance. Collect responses in real-time, 
+            analyze data with powerful insights, and scale your business effortlessly.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Link href="/auth/signup">
-              <Button size="default" className="min-w-[120px]">
-                Get Started
+              <Button 
+                size="lg" 
+                className="min-w-[180px] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-2xl hover:shadow-primary/30 transition-all duration-500 text-lg py-6 relative group overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <Rocket className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
+                Start building for free
               </Button>
             </Link>
             <Link href="/auth/signin">
-              <Button variant="outline" size="default" className="min-w-[120px]">
-                View Components
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="min-w-[180px] border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-lg py-6 backdrop-blur-sm"
+              >
+                View pricing plans
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </Link>
           </div>
+
+          {/* Social Proof */}
+          <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2">
+              <div className="flex -space-x-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full border-2 border-background"></div>
+                ))}
+              </div>
+              <span>Trusted by 10,000+ teams</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+              ))}
+              <span className="ml-2">4.9/5 rating</span>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-12 bg-muted/20">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-foreground mb-3">
-              Everything you need
+      {/* Features Section */}
+      <section className="relative z-10 py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
+              Everything you need to build
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"> amazing forms</span>
             </h2>
-            <p className="text-muted-foreground">
-              Powerful features to create, manage, and analyze your forms
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Powerful features designed for modern teams who want to move fast and build better
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-none bg-card/50">
-              <CardHeader className="pb-4">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
-                  <Zap className="w-4 h-4 text-primary" />
-                </div>
-                <CardTitle className="text-lg">AI Generation</CardTitle>
-                <CardDescription className="text-sm">
-                  Describe your form and let AI build it instantly with smart field suggestions.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="border-0 shadow-none bg-card/50">
-              <CardHeader className="pb-4">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
-                  <BarChart3 className="w-4 h-4 text-primary" />
-                </div>
-                <CardTitle className="text-lg">Real-time Analytics</CardTitle>
-                <CardDescription className="text-sm">
-                  Track responses, analyze trends, and get insights with beautiful dashboards.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="border-0 shadow-none bg-card/50">
-              <CardHeader className="pb-4">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
-                  <Shield className="w-4 h-4 text-primary" />
-                </div>
-                <CardTitle className="text-lg">Secure & Reliable</CardTitle>
-                <CardDescription className="text-sm">
-                  Enterprise-grade security with 99.9% uptime and data encryption.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Zap,
+                title: "AI-Powered Generation",
+                description: "Describe your form in plain English and watch AI build it instantly with smart field suggestions and validation rules.",
+                gradient: "from-yellow-500/20 to-orange-500/20"
+              },
+              {
+                icon: BarChart3,
+                title: "Real-time Analytics",
+                description: "Track responses, analyze trends, and get actionable insights with beautiful dashboards and automated reports.",
+                gradient: "from-blue-500/20 to-cyan-500/20"
+              },
+              {
+                icon: Shield,
+                title: "Enterprise Security",
+                description: "Bank-grade security with end-to-end encryption, GDPR compliance, and 99.9% uptime guarantee.",
+                gradient: "from-green-500/20 to-emerald-500/20"
+              }
+            ].map((feature, index) => (
+              <Card 
+                key={index}
+                className="group relative border-0 bg-gradient-to-br from-card/50 to-card/30 backdrop-blur-sm hover:from-card/70 hover:to-card/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-primary/10"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg`}></div>
+                <CardHeader className="relative z-10 pb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                  <CardDescription className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-12">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-2xl font-bold text-foreground mb-3">
-            Ready to get started?
+      {/* Testimonial Section */}
+      <section className="relative z-10 py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="border-0 bg-gradient-to-br from-card/60 to-card/40 backdrop-blur-xl shadow-2xl">
+            <CardContent className="p-12 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-8 h-8 text-primary" />
+              </div>
+              <blockquote className="text-2xl font-medium text-foreground mb-6 leading-relaxed">
+                "FormBuilder reduced our development time by 80% and helped us launch our product 3 months earlier. 
+                The AI generation is incredibly accurate."
+              </blockquote>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary/30 to-primary/20 rounded-full"></div>
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Sarah Chen</div>
+                  <div className="text-sm text-muted-foreground">CTO at TechCorp</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="relative z-10 py-24 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-foreground mb-4">
+            Ready to build something
+            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"> amazing?</span>
           </h2>
-          <p className="text-muted-foreground mb-6">
-            Join thousands of teams already using FormBuilder
+          <p className="text-xl text-muted-foreground mb-10">
+            Join thousands of teams already building with FormBuilder
           </p>
           <Link href="/auth/signup">
-            <Button size="default">
+            <Button 
+              size="lg"
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-2xl hover:shadow-primary/30 transition-all duration-500 text-lg py-6 px-8 relative group overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               Start building for free
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
             </Button>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            © 2024 FormBuilder. Built for developers.
+      <footer className="relative z-10 border-t border-border/50 backdrop-blur-xl bg-background/80 py-12">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-muted-foreground">
+            © 2024 FormBuilder. Built for developers who want to move fast.
           </p>
         </div>
       </footer>

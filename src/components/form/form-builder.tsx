@@ -122,30 +122,25 @@ export function FormBuilder({ form, onFormUpdate, onAddField }: FormBuilderProps
 
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {form.fields.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium text-muted-foreground">Form Fields</h4>
-            <span className="text-xs text-muted-foreground">Drag to reorder</span>
-          </div>
-
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={form.fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {form.fields.map((field) => (
                   <SortableItem key={field.id} id={field.id}>
-                    <div className="field-item border border-border rounded-lg p-3 bg-muted/20 hover:bg-muted/40 transition-colors">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
+                    <Card className="border-0 shadow-none bg-background p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
                           <DragHandle>
-                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                           </DragHandle>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
                             {fieldTypes.find(t => t.type === field.type)?.label}
                           </span>
                         </div>
@@ -157,40 +152,34 @@ export function FormBuilder({ form, onFormUpdate, onAddField }: FormBuilderProps
                           }}
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
 
-                      <div className="space-y-3">
-                        {/* Field Label & Placeholder in a grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-4">
+                        {/* Field Label & Placeholder */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label className="text-xs font-medium mb-1 block text-muted-foreground">
+                            <Label className="text-sm font-medium mb-2 block">
                               Field Label
                             </Label>
                             <Input
                               value={field.label}
                               onChange={(e) => handleFieldUpdate(field.id, { label: e.target.value })}
                               placeholder="Enter field label"
-                              onFocus={() => setEditingField(`${field.id}-label`)}
-                              onBlur={() => setEditingField(null)}
-                              className={`h-8 ${editingField === `${field.id}-label` ? 'ring-2 ring-primary' : ''}`}
                             />
                           </div>
 
                           <div>
-                            <Label className="text-xs font-medium mb-1 block text-muted-foreground">
+                            <Label className="text-sm font-medium mb-2 block">
                               Placeholder Text
                             </Label>
                             <Input
                               value={field.placeholder || ''}
                               onChange={(e) => handleFieldUpdate(field.id, { placeholder: e.target.value })}
                               placeholder="Enter placeholder text"
-                              onFocus={() => setEditingField(`${field.id}-placeholder`)}
-                              onBlur={() => setEditingField(null)}
-                              className={`h-8 ${editingField === `${field.id}-placeholder` ? 'ring-2 ring-primary' : ''}`}
                             />
                           </div>
                         </div>
@@ -198,46 +187,43 @@ export function FormBuilder({ form, onFormUpdate, onAddField }: FormBuilderProps
                         {/* Options for select, radio, checkbox */}
                         {['select', 'radio', 'checkbox'].includes(field.type) && (
                           <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-xs font-medium text-muted-foreground">
+                            <div className="flex items-center justify-between mb-3">
+                              <Label className="text-sm font-medium">
                                 Options
                               </Label>
                               <Button
                                 onClick={() => handleAddOption(field.id)}
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-6 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10"
                               >
-                                <Plus className="w-3 h-3 mr-1" />
-                                Add
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Option
                               </Button>
                             </div>
 
-                            <div className="space-y-1.5">
+                            <div className="space-y-2">
                               {(field.options || []).map((option, index) => (
                                 <div key={index} className="flex items-center space-x-2">
                                   <Input
                                     value={option}
                                     onChange={(e) => handleUpdateOption(field.id, index, e.target.value)}
                                     placeholder={`Option ${index + 1}`}
-                                    className={`flex-1 h-7 text-sm ${editingField === `${field.id}-option-${index}` ? 'ring-2 ring-primary' : ''}`}
-                                    onFocus={() => setEditingField(`${field.id}-option-${index}`)}
-                                    onBlur={() => setEditingField(null)}
+                                    className="flex-1"
                                   />
                                   <Button
                                     onClick={() => handleDeleteOption(field.id, index)}
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                   >
-                                    <X className="w-3 h-3" />
+                                    <X className="w-4 h-4" />
                                   </Button>
                                 </div>
                               ))}
 
                               {(!field.options || field.options.length === 0) && (
-                                <div className="text-xs text-muted-foreground py-1">
-                                  No options added yet. Click "Add" to get started.
+                                <div className="text-sm text-muted-foreground py-2">
+                                  No options added yet. Click "Add Option" to get started.
                                 </div>
                               )}
                             </div>
@@ -245,25 +231,27 @@ export function FormBuilder({ form, onFormUpdate, onAddField }: FormBuilderProps
                         )}
 
                         {/* Required Toggle */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
                           <div className="flex items-center space-x-2">
                             <input
                               type="checkbox"
                               id={`required-${field.id}`}
                               checked={field.required}
                               onChange={(e) => handleFieldUpdate(field.id, { required: e.target.checked })}
-                              className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                             />
-                            <Label htmlFor={`required-${field.id}`} className="text-xs font-medium text-muted-foreground">
+                            <Label htmlFor={`required-${field.id}`} className="text-sm font-medium">
                               Required field
                             </Label>
                           </div>
                           {field.required && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Required</span>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
+                              Required
+                            </span>
                           )}
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   </SortableItem>
                 ))}
               </div>
