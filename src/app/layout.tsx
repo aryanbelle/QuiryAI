@@ -4,6 +4,7 @@ import './globals.css';
 import { Navbar } from '@/components/layout/navbar';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/contexts/auth-context';
+
 import { usePathname } from 'next/navigation';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
-        <title>FormBuilder - Create Dynamic Forms with AI</title>
+        <title>QuiryAI - Create Dynamic Forms with AI</title>
         <meta name="description" content="Build beautiful forms with AI assistance, collect responses, and analyze data." />
       </head>
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">

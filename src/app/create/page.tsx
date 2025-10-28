@@ -15,6 +15,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Form, FormField } from '@/types/form';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { InlineLoader } from '@/components/ui/loader';
 
 const fieldTypes = [
   { type: 'text' as const, label: 'Text', icon: Type },
@@ -164,6 +165,7 @@ function CreateFormContent() {
     isActive: false,
   });
 
+
   const handleAIGenerate = async () => {
     if (!aiPrompt.trim()) {
       toast.error('Please describe what kind of form you want to create');
@@ -272,10 +274,7 @@ function CreateFormContent() {
           {form.fields.length > 0 && (
             <Button onClick={handleSaveForm} disabled={saving}>
               {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Saving...
-                </>
+                <InlineLoader size="sm" text="Saving..." />
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
@@ -337,10 +336,7 @@ function CreateFormContent() {
                   className="flex-1"
                 >
                   {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Generating...
-                    </>
+                    <InlineLoader size="sm" text="Generating..." />
                   ) : (
                     'Generate Form'
                   )}

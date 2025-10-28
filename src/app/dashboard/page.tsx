@@ -26,11 +26,12 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { PageLoader } from '@/components/ui/loader';
 
 function DashboardContent() {
   const [forms, setForms] = useState<Form[]>([]);
-  const [loading, setLoading] = useState(true);
   const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -155,60 +156,7 @@ function DashboardContent() {
   const totalViews = forms.reduce((acc, form) => acc + getFormStats(form.$id!).views, 0);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="animate-pulse space-y-6">
-            {/* Header skeleton */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="h-7 bg-muted rounded w-64"></div>
-                <div className="h-4 bg-muted rounded w-48"></div>
-              </div>
-              <div className="h-9 bg-muted rounded w-28"></div>
-            </div>
-
-            {/* Stats skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <Card key={i}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <div className="h-4 bg-muted rounded w-20"></div>
-                      <div className="h-4 w-4 bg-muted rounded"></div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-8 bg-muted rounded w-12 mb-1"></div>
-                    <div className="h-3 bg-muted rounded w-16"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Table skeleton */}
-            <Card>
-              <CardHeader>
-                <div className="h-6 bg-muted rounded w-32"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="h-4 bg-muted rounded flex-1"></div>
-                      <div className="h-4 bg-muted rounded w-20"></div>
-                      <div className="h-4 bg-muted rounded w-16"></div>
-                      <div className="h-4 bg-muted rounded w-24"></div>
-                      <div className="h-4 bg-muted rounded w-20"></div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoader text="Loading your forms..." />;
   }
 
   return (

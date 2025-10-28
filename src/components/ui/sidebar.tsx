@@ -17,7 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
+
 import {
   Tooltip,
   TooltipContent,
@@ -606,11 +606,6 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean
 }) {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
-
   return (
     <div
       data-slot="sidebar-menu-skeleton"
@@ -619,19 +614,14 @@ function SidebarMenuSkeleton({
       {...props}
     >
       {showIcon && (
-        <Skeleton
-          className="size-4 rounded-md"
+        <div
+          className="size-4 rounded-md bg-muted/50 animate-pulse"
           data-sidebar="menu-skeleton-icon"
         />
       )}
-      <Skeleton
-        className="h-4 max-w-(--skeleton-width) flex-1"
+      <div
+        className="h-4 flex-1 bg-muted/50 animate-pulse rounded-md"
         data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
       />
     </div>
   )
