@@ -32,7 +32,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           <Link href="/dashboard" className="flex items-center">
-            <span className="text-xl font-bold text-foreground">FormBuilder</span>
+            <span className="text-xl font-bold text-foreground">QuiryAI</span>
           </Link>
           
           {user ? (

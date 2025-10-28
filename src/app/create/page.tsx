@@ -15,6 +15,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Form, FormField } from '@/types/form';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { InlineLoader } from '@/components/ui/loader';
 
 const fieldTypes = [
   { type: 'text' as const, label: 'Text', icon: Type },
@@ -30,11 +31,11 @@ const fieldTypes = [
 
 function FormDetailsSection({ form, onFormUpdate }: { form: Form; onFormUpdate: (form: Form) => void }) {
   return (
-    <Card className="p-4">
-      <h3 className="text-base font-semibold mb-4">Form Details</h3>
+    <Card className="border-0 shadow-none bg-card/50 p-6">
+      <h3 className="text-lg font-medium mb-4">Form Details</h3>
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="form-title" className="text-xs font-medium mb-1.5 block text-muted-foreground">
+          <Label htmlFor="form-title" className="text-sm font-medium mb-2 block">
             Form Title
           </Label>
           <Input
@@ -42,11 +43,10 @@ function FormDetailsSection({ form, onFormUpdate }: { form: Form; onFormUpdate: 
             value={form.title}
             onChange={(e) => onFormUpdate({ ...form, title: e.target.value })}
             placeholder="Enter your form title"
-            className="h-9"
           />
         </div>
         <div>
-          <Label htmlFor="form-description" className="text-xs font-medium mb-1.5 block text-muted-foreground">
+          <Label htmlFor="form-description" className="text-sm font-medium mb-2 block">
             Description
           </Label>
           <Input
@@ -54,7 +54,6 @@ function FormDetailsSection({ form, onFormUpdate }: { form: Form; onFormUpdate: 
             value={form.description}
             onChange={(e) => onFormUpdate({ ...form, description: e.target.value })}
             placeholder="Describe what this form is for"
-            className="h-9"
           />
         </div>
       </div>
@@ -64,29 +63,28 @@ function FormDetailsSection({ form, onFormUpdate }: { form: Form; onFormUpdate: 
 
 function AddFieldsSection({ onAddField, onAIGenerate }: { onAddField: (type: FormField['type']) => void; onAIGenerate: () => void }) {
   return (
-    <Card className="p-4">
+    <Card className="border-0 shadow-none bg-card/50 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold">Add Fields</h3>
+        <h3 className="text-lg font-medium">Add Fields</h3>
         <Button
           onClick={onAIGenerate}
           variant="outline"
           size="sm"
-          className="h-8 px-3 text-xs"
         >
-          <Wand2 className="w-3.5 h-3.5 mr-2" />
+          <Wand2 className="w-4 h-4 mr-2" />
           Generate with AI
         </Button>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {fieldTypes.map(({ type, label, icon: Icon }) => (
           <Button
             key={type}
             onClick={() => onAddField(type)}
             variant="outline"
             size="sm"
-            className="flex items-center space-x-2 h-8 px-3 text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
+            className="flex items-center justify-start space-x-2 h-10 px-4 hover:bg-primary hover:text-primary-foreground transition-colors"
           >
-            <Icon className="w-3.5 h-3.5" />
+            <Icon className="w-4 h-4" />
             <span>{label}</span>
           </Button>
         ))}
@@ -113,17 +111,17 @@ function FormBuilderPreviewSection({ form, onFormUpdate }: { form: Form; onFormU
   };
 
   return (
-    <Card className="p-4">
+    <Card className="border-0 shadow-none bg-card/50 p-6">
       <Tabs defaultValue="edit" className="w-full">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold">Form Builder</h3>
-          <TabsList className="grid w-[200px] grid-cols-2">
-            <TabsTrigger value="edit" className="text-xs">
-              <Edit className="w-3.5 h-3.5 mr-1.5" />
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-medium">Form Builder</h3>
+          <TabsList className="grid w-[180px] grid-cols-2">
+            <TabsTrigger value="edit" className="text-sm">
+              <Edit className="w-4 h-4 mr-2" />
               Edit
             </TabsTrigger>
-            <TabsTrigger value="preview" className="text-xs">
-              <Eye className="w-3.5 h-3.5 mr-1.5" />
+            <TabsTrigger value="preview" className="text-sm">
+              <Eye className="w-4 h-4 mr-2" />
               Preview
             </TabsTrigger>
           </TabsList>
@@ -137,16 +135,16 @@ function FormBuilderPreviewSection({ form, onFormUpdate }: { form: Form; onFormU
               onAddField={handleAddField}
             />
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-16 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">No fields added yet</p>
-              <p className="text-xs">Add fields above to start building your form</p>
+              <p className="text-lg font-medium mb-2">No fields added yet</p>
+              <p className="text-sm">Add fields above to start building your form</p>
             </div>
           )}
         </TabsContent>
         
         <TabsContent value="preview" className="mt-0">
-          <div className="bg-muted/30 rounded-lg p-6">
+          <div className="bg-muted/20 rounded-lg p-8">
             <FormPreview form={form} />
           </div>
         </TabsContent>
@@ -166,6 +164,7 @@ function CreateFormContent() {
     fields: [],
     isActive: false,
   });
+
 
   const handleAIGenerate = async () => {
     if (!aiPrompt.trim()) {
@@ -257,28 +256,25 @@ function CreateFormContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
-              <Button variant="ghost">
+              <Button variant="ghost" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">Create Form</h1>
-              <p className="text-muted-foreground">Build with AI or design manually</p>
+              <h1 className="text-2xl font-medium text-foreground">Create Form</h1>
+              <p className="text-muted-foreground mt-1">Build with AI or design manually</p>
             </div>
           </div>
 
           {form.fields.length > 0 && (
             <Button onClick={handleSaveForm} disabled={saving}>
               {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Saving...
-                </>
+                <InlineLoader size="sm" text="Saving..." />
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
@@ -340,10 +336,7 @@ function CreateFormContent() {
                   className="flex-1"
                 >
                   {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Generating...
-                    </>
+                    <InlineLoader size="sm" text="Generating..." />
                   ) : (
                     'Generate Form'
                   )}
